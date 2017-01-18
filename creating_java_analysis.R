@@ -6,6 +6,7 @@ build <- read.dbf("TBL_BUIL.DBF")
 build <- filter(build, USE=="1s")
 land <- read.dbf("TBL_LAND.DBF")
 homes <- inner_join(build, land, by="PID")
+homes$PID <- as.factor(as.numeric(as.character(homes$PID)))
 homes$total_sqft <- homes$GRND_SQFT+homes$FLR2_SQFT+homes$BSMT_FNSH
 homes_GIS_export <-data.frame(cbind(homes$PID,homes$total_sqft,homes$X,homes$Y))
 names(homes_GIS_export)=c("PID","SQFT","X","Y")
@@ -14,6 +15,7 @@ write.csv(homes_GIS_export, "home_info_for_GIS.csv")
 #read in with new coordinates
 options(scipen=999)
 homes_updatedXY <- read.csv("home_lat_long.csv")[,c(2:6)]
+homes_updatedXY$PID<- as.factor(homes_updatedXY$PID)
 
 #filter out small and large homes
 homes_updatedXY <- filter(homes_updatedXY, total_SQFT>200)%>%filter(total_SQFT<10000)
@@ -23,30 +25,81 @@ write.csv(homes_updatedXY, "homes_qgis.csv", row.names=F)
 homes_in_buffer <- data.frame("OBJECTID" = unique(read.csv("buffered_homes_halfMile.csv")$OBJECTID))
 homes_updated_buffer <- inner_join(homes_updatedXY, homes_in_buffer, by="OBJECTID")
 
-
 homes_in_quarter_buffer <- data.frame("OBJECTID"=unique(read.csv("buffered_homes_quarterMile.csv")$OBJECTID))
 homes_updated_quarter_buffer <- inner_join(homes_updatedXY,homes_in_quarter_buffer,by="OBJECTID")
 
 #figure out homes sold
-sales <- read.csv("Property_Sales_20102013.csv")
-homes_with_sales <- inner_join(homes_updated_buffer, sales, by=c("PID"="PIN"))
-homes_with_sales_quarter <- inner_join(homes_updated_quarter_buffer,sales, by=c("PID"="PIN"))
+sales <- read.csv("Property_Sales_20102013.csv", stringsAsFactors = F)
+sales$Gross_Sale_Price <- as.numeric(sales$Gross_Sale_Price)
+
+sales_cleaned <- filter(sales, Gross_Sale_Price>10000)
+sales_cleaned <- filter(sales_cleaned,Gross_Sale_Price<5000000)
+sales_cleaned <- data.frame(cbind(sales_cleaned$PIN,sales_cleaned$Sale_Date,sales_cleaned$Gross_Sale_Price),stringsAsFactors = F)
+names(sales_cleaned) <- c("PID","Date","Price")
+sales_cleaned$PID <- as.factor(sales_cleaned$PID)
+sales_cleaned$Price<-as.numeric(sales_cleaned$Price)
+
+homes_with_sales <- inner_join(homes_updated_buffer, sales_cleaned)
+homes_with_sales_quarter <- inner_join(homes_updated_quarter_buffer,sales_cleaned)
 
 parcels <- read.dbf("parcels_henn.dbf")
-parcels$PIN2 <- as.numeric(as.character(parcels$PIN2))
-sold_homes <- data.frame(PID=unique(inner_join(homes_with_sales,parcels,by=c("PID"="PIN2"))$PID))
+parcels$PID <- as.factor(as.numeric(as.character(parcels$PIN2)))
+sold_homes <- data.frame(PID=unique(inner_join(homes_with_sales,parcels)$PID))
 sold_homes$soldHalfMileBuffer <- TRUE
 
-sold_homes_quarter <- data.frame(PID=unique(inner_join(homes_with_sales_quarter,parcels,by=c("PID"="PIN2"))$PID))
+sold_homes_quarter <- data.frame(PID=unique(inner_join(homes_with_sales_quarter,parcels)$PID))
 sold_homes_quarter$soldQuarterMileBuffer <- TRUE
 
 homes_final<- left_join(homes_updatedXY,sold_homes)
 homes_final_quarter <- left_join(homes_updatedXY,sold_homes_quarter)
 homes_final$soldHalfMileBuffer[is.na(homes_final$soldHalfMileBuffer)]<-FALSE
 homes_final_quarter$soldQuarterMileBuffer[is.na(homes_final_quarter$soldQuarterMileBuffer)]<-FALSE
+
 write.csv(homes_final[,-c(2)],"half_mile_buffer_javahomes.csv",row.names=F)
 write.csv(homes_final_quarter[,-c(2)],"quarter_mile_buffer_javahomes.csv",row.names=F)
 write.csv(homes_final_quarter[,1:2],"homes_OBJID_PID.csv",row.names=F)
 
 #reduce charecteristics needed
+final_data <- inner_join(sold_homes_quarter,homes)
+final_data <- inner_join(parcels,final_data, by="PID")
+sales_cleaned_no_repeats <- sales_cleaned[!duplicated(sales_cleaned),]
+sales_cleaned_no_repeats$Year <- as.numeric(substr(sales_cleaned_no_repeats$Date,1,4))
+sales_cleaned_no_repeats$Month <- as.factor(substr(sales_cleaned_no_repeats$Date,6,7))
+final_data <- inner_join(sales_cleaned_no_repeats,final_data)
 
+k8_averages <- read.csv("deviations_k_8.csv",header=FALSE)
+names(k8_averages)<- c("OBJECTID","k8_ave")
+k8_averages <- inner_join(k8_averages,homes_final_quarter)
+k8_averages <- data.frame(PID=k8_averages$PID,k8_ave=k8_averages$k8_ave)
+
+final_data <- inner_join(final_data,k8_averages)
+final_data$percentDeviation <- (final_data$k8_ave-final_data$total_sqft)/final_data$k8_ave
+relevant_data <- data.frame(percentDeviation=((final_data$k8_ave-final_data$total_sqft)/final_data$k8_ave),
+                            price=final_data$Price, total_sqft=final_data$total_sqft,year_built=final_data$YEAR_BUILT.y,
+                            school_district = final_data$WSHD_DIST, year = final_data$Year, month=final_data$Month,
+                            stories = final_data$STORIES, roof = final_data$ROOF_TYPE, acres = final_data$ACRES_POLY,
+                            condition = final_data$CONDITION, heat = final_data$PRMY_HEAT, 
+                            neighborhood = final_data$NEIGHBORHO, fireplace = final_data$FIREPLACES, 
+                            ac = ifelse(final_data$AC_PERCENT>0,1,0), baths = (as.numeric(final_data$BATH_DELUX)+
+                                                                                 as.numeric(final_data$BATH_3QTR)+
+                                                                                 as.numeric(final_data$BATH_FULL)+
+                                                                                 as.numeric(final_data$BATH_HALF)),
+                            fullbaths = final_data$BATH_FULL, halfbaths = final_data$BATH_HALF)
+relevant_data <- relevant_data[(complete.cases(relevant_data)),]
+relevant_data$neighborhood <- as.factor(relevant_data$neighborhood)
+relevant_data$condition <- as.numeric(relevant_data$condition)
+relevant_data$year<- as.factor(relevant_data$year)
+relevant_data$ac <- as.factor(relevant_data$ac)
+test <- lm(log(price)~total_sqft+percentDeviation+year_built+school_district+
+             year*month+roof+stories+acres+condition+heat+neighborhood +sqrt(fireplace)+
+             ac+baths, data=relevant_data)
+summary(test)
+plot(test)
+
+plot(test$residuals~relevant_data$percentDeviation)
+plot(log(final_data$Price)~(final_data$BATH_HALF))
+plot(log(relevant_data$price)~(relevant_data$baths))
+
+pairs(~total_sqft+percentDeviation+year_built+school_district+
+                   year*month+roof+stories+acres+condition+heat+neighborhood +sqrt(fireplace)+
+                   ac+baths, data=relevant_data)
