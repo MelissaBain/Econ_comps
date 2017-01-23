@@ -65,8 +65,14 @@ final_data <- inner_join(parcels,final_data, by="PID")
 sales_cleaned_no_repeats <- sales_cleaned[!duplicated(sales_cleaned),]
 sales_cleaned_no_repeats$Year <- as.numeric(substr(sales_cleaned_no_repeats$Date,1,4))
 sales_cleaned_no_repeats$Month <- as.factor(substr(sales_cleaned_no_repeats$Date,6,7))
+
 final_data <- inner_join(sales_cleaned_no_repeats,final_data)
 
+school_info <- read.csv("homes_with_school_info.csv")
+school_info <-data.frame(PID=as.character(school_info$PID), elemSchool = school_info$ELEMENTARY, 
+                         midSchool = school_info$MIDDLE,highSchool=school_info$HIGH)
+final_data <- inner_join(final_data,school_info)
+write.csv(final_data,"final_data.csv", row.names=F)
 k8_averages <- read.csv("deviations_k_8.csv",header=FALSE)
 names(k8_averages)<- c("OBJECTID","k8_ave")
 k8_averages <- inner_join(k8_averages,homes_final_quarter)
@@ -85,12 +91,13 @@ relevant_data <- data.frame(percentDeviation=((final_data$k8_ave-final_data$tota
                                                                                  as.numeric(final_data$BATH_FULL)+
                                                                                  as.numeric(final_data$BATH_HALF)),
                             fullbaths = final_data$BATH_FULL, halfbaths = final_data$BATH_HALF)
+
 relevant_data <- relevant_data[(complete.cases(relevant_data)),]
 relevant_data$neighborhood <- as.factor(relevant_data$neighborhood)
 relevant_data$condition <- as.numeric(relevant_data$condition)
 relevant_data$year<- as.factor(relevant_data$year)
 relevant_data$ac <- as.factor(relevant_data$ac)
-test <- lm(log(price)~total_sqft+percentDeviation+year_built+school_district+
+test <- lm(log(price)~log(total_sqft)+percentDeviation+year_built+school_district+
              year*month+roof+stories+acres+condition+heat+neighborhood +sqrt(fireplace)+
              ac+baths, data=relevant_data)
 summary(test)
@@ -100,6 +107,4 @@ plot(test$residuals~relevant_data$percentDeviation)
 plot(log(final_data$Price)~(final_data$BATH_HALF))
 plot(log(relevant_data$price)~(relevant_data$baths))
 
-pairs(~total_sqft+percentDeviation+year_built+school_district+
-                   year*month+roof+stories+acres+condition+heat+neighborhood +sqrt(fireplace)+
-                   ac+baths, data=relevant_data)
+pairs(~log(price)+(total_sqft)+percentDeviation+year_built, data=relevant_data)
