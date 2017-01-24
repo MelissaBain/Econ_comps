@@ -7,7 +7,7 @@ public class DistanceCalculatorRadius {
 
 	public static void main (String[] args) throws java.lang.Exception {
 		long startTime = System.nanoTime();
-		File houseInfo = new File("quarter_mile_buffer_javahomes.csv");
+		File houseInfo = new File("half_mile_buffer_javahomes.csv");
 		List<Integer> neighbors = new ArrayList<Integer>();
 		List<Float> aveSize = new ArrayList<Float>();
 		List<Home> Minneapolis = new ArrayList<Home>();
@@ -40,7 +40,7 @@ public class DistanceCalculatorRadius {
 				for(int curNeighbor=0; curNeighbor<Minneapolis.size();curNeighbor++){
 					neighborData = Minneapolis.get(curNeighbor);
 					if(distance(houseData.getLat(),houseData.getLon(), neighborData.getLat(),
-						neighborData.getLon())<.25){
+						neighborData.getLon())<.15){
 						totalSize += neighborData.getSqrFeet();
 						numNeighbors += 1;
 				  }
@@ -49,7 +49,7 @@ public class DistanceCalculatorRadius {
 				houseData.setNeighSize(aveNeigh);
 			}
 		}
-		PrintWriter writer = new PrintWriter("deviations_quarter_mile.csv", "UTF-8"); //file writer
+		PrintWriter writer = new PrintWriter("deviations_40_mile.csv", "UTF-8"); //file writer
 		for(Home house: Minneapolis){
 			if(house.isValid()){
 				writer.println(house.getID() + "," + house.getNeighSize());

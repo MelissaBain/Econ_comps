@@ -71,8 +71,13 @@ final_data <- inner_join(sales_cleaned_no_repeats,final_data)
 school_info <- read.csv("homes_with_school_info.csv")
 school_info <-data.frame(PID=as.character(school_info$PID), elemSchool = school_info$ELEMENTARY, 
                          midSchool = school_info$MIDDLE,highSchool=school_info$HIGH)
+highSchoolsInfo <- data.frame(highSchool=levels(school_info$highSchool), highSchool_ranking=c(80,73,69,54,20,38))
+
 final_data <- inner_join(final_data,school_info)
+final_data <- inner_join(final_data,highSchoolsInfo)
 write.csv(final_data,"final_data.csv", row.names=F)
+
+
 k8_averages <- read.csv("deviations_k_8.csv",header=FALSE)
 names(k8_averages)<- c("OBJECTID","k8_ave")
 k8_averages <- inner_join(k8_averages,homes_final_quarter)
