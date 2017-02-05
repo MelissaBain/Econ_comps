@@ -41,8 +41,9 @@ sales_cleaned$Price<-as.numeric(sales_cleaned$Price)
 
 homes_with_sales <- inner_join(homes_updated_buffer, sales_cleaned)
 homes_with_sales_quarter <- inner_join(homes_updated_quarter_buffer,sales_cleaned)
-
+homes_with_sales_all <-inner_join(homes_updatedXY, sales_cleaned)
 parcels <- read.dbf("parcels_henn.dbf")
+
 parcels$PID <- as.factor(as.numeric(as.character(parcels$PIN2)))
 sold_homes <- data.frame(PID=unique(inner_join(homes_with_sales,parcels)$PID))
 sold_homes$soldHalfMileBuffer <- TRUE
@@ -50,18 +51,28 @@ sold_homes$soldHalfMileBuffer <- TRUE
 sold_homes_quarter <- data.frame(PID=unique(inner_join(homes_with_sales_quarter,parcels)$PID))
 sold_homes_quarter$soldQuarterMileBuffer <- TRUE
 
+sold_homes_all <- data.frame(PID=unique(inner_join(homes_with_sales_all,parcels)$PID))
+sold_homes_all$sold <- TRUE
+
+homes_final_all<- left_join(homes_updatedXY,sold_homes_all)
+homes_final_all$sold[is.na(homes_final_all$sold)]<-FALSE
+
 homes_final<- left_join(homes_updatedXY,sold_homes)
 homes_final_quarter <- left_join(homes_updatedXY,sold_homes_quarter)
 homes_final$soldHalfMileBuffer[is.na(homes_final$soldHalfMileBuffer)]<-FALSE
 homes_final_quarter$soldQuarterMileBuffer[is.na(homes_final_quarter$soldQuarterMileBuffer)]<-FALSE
 
+write.csv(homes_final_all[,-c(2)],"javahomes.csv",row.names=F)
 write.csv(homes_final[,-c(2)],"half_mile_buffer_javahomes.csv",row.names=F)
 write.csv(homes_final_quarter[,-c(2)],"quarter_mile_buffer_javahomes.csv",row.names=F)
 write.csv(homes_final_quarter[,1:2],"homes_OBJID_PID.csv",row.names=F)
 
 #reduce charecteristics needed
-final_data <- inner_join(sold_homes_quarter,homes)
+final_data <- inner_join(sold_homes_all,homes)
 final_data <- inner_join(parcels,final_data, by="PID")
+names(homes_updatedXY)[4:5] <- c("long", "lat")
+latLongInfo <- data.frame(PID = homes_updatedXY$PID,long=homes_updatedXY$long, lat = homes_updatedXY$lat)
+final_data <- inner_join(final_data, latLongInfo, by = "PID")
 sales_cleaned_no_repeats <- sales_cleaned[!duplicated(sales_cleaned),]
 sales_cleaned_no_repeats$Year <- as.numeric(substr(sales_cleaned_no_repeats$Date,1,4))
 sales_cleaned_no_repeats$Month <- as.factor(substr(sales_cleaned_no_repeats$Date,6,7))

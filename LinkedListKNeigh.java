@@ -70,6 +70,20 @@ class LinkedListKNeigh{
     	return totalSqrFt/(k-1);
     }
     
+    public Double getDist(){
+    	return header.getDistance();
+    }
+    
+    public Double getRingAve(int R){
+    	Double totalSqrFt = 0.0;
+    	KHomes curHouse = header;
+    	for(int i=R+1; i<k; i++){
+    		totalSqrFt+=curHouse.getSqrFeet();
+			curHouse = curHouse.getNext();
+    	} 
+    	return totalSqrFt/(k-1-R);
+    }
+    
 	public static void main(String[] args){
 		KHomes house1 = new KHomes(.4,2000.0);
 		LinkedListKNeigh testList = new LinkedListKNeigh(4);

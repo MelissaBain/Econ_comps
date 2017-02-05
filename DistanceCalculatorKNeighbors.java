@@ -18,9 +18,11 @@ class DistanceCalculatorKNeighbors{
 		Home houseData;
 		Home neighborData;
 		LinkedListKNeigh kInfo;
-		int k = 8;
+		int k = 1;
 		Double neighDistance;
 		KHomes curNeigh;
+		int validHomes = 0;
+		Double totalMaxDistance = 0.0;
 		
 		try{
 			fileInput = new Scanner(houseInfo);
@@ -39,6 +41,7 @@ class DistanceCalculatorKNeighbors{
 		for(int curHouse=0;curHouse<Minneapolis.size();curHouse++){
 			houseData = Minneapolis.get(curHouse);
 			if(houseData.isValid()){
+				validHomes ++;
 				kInfo = new LinkedListKNeigh(k+1);
 				for(int curNeighbor=0; curNeighbor<Minneapolis.size();curNeighbor++){
 					neighborData = Minneapolis.get(curNeighbor);
@@ -47,15 +50,17 @@ class DistanceCalculatorKNeighbors{
 					curNeigh = new KHomes(neighDistance, neighborData.getSqrFeet());
 					kInfo.add(curNeigh);	
 				}
+				totalMaxDistance += kInfo.getDist();
 				houseData.setNeighSize(kInfo.getAve());
 			}
 		}
-		PrintWriter writer = new PrintWriter("deviations_k_8.csv", "UTF-8"); //file writer
+		PrintWriter writer = new PrintWriter("deviations_k_1.csv", "UTF-8"); //file writer
 		for(Home house: Minneapolis){
 			if(house.isValid()){
 				writer.println(house.getID() + "," + house.getNeighSize());
 		    }
 		}
+		writer.println("Ave max distance" + "," + (totalMaxDistance/validHomes));
 		writer.close();
 		long endTime = System.nanoTime();
 		System.out.println((endTime - startTime)/1000000000);

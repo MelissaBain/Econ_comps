@@ -2,22 +2,21 @@ library(car)
 final_data <- read.csv("final_data.csv")
 k8_averages <- read.csv("deviations_k_8.csv",header=FALSE)
 names(k8_averages)<- c("OBJECTID","k8_ave")
+k8_averages$OBJECTID <- as.numeric(as.character(k8_averages$OBJECTID))
 homes_final_quarter <- read.csv("homes_OBJID_PID.csv")
 k8_averages <- inner_join(k8_averages,homes_final_quarter)
 k8_averages <- data.frame(PID=k8_averages$PID,k8_ave=k8_averages$k8_ave)
 final_data <- inner_join(final_data,k8_averages)
 
-quarter_ave <-read.csv("deviations_quarter_mile.csv",header=F)
-names(quarter_ave)<- c("OBJECTID","quarter_ave")
-quarter_ave <- inner_join(quarter_ave,homes_final_quarter)
-quarter_ave <- data.frame(PID=quarter_ave$PID,quarter_ave=quarter_ave$quarter_ave)
-final_data <- inner_join(final_data, quarter_ave)
+# quarter_ave <-read.csv("deviations_quarter_mile.csv",header=F)
+# names(quarter_ave)<- c("OBJECTID","quarter_ave")
+# quarter_ave <- inner_join(quarter_ave,homes_final_quarter)
+# quarter_ave <- data.frame(PID=quarter_ave$PID,quarter_ave=quarter_ave$quarter_ave)
+# final_data <- inner_join(final_data, quarter_ave)
 
-relevant_data <- data.frame(PID = final_data$PID,k8_ave = final_data$k8_ave, quarter_ave = final_data$quarter_ave,
+relevant_data <- data.frame(PID = final_data$PID,k8_ave = final_data$k8_ave,
                             deviation_k8=(final_data$total_sqft-final_data$k8_ave),
-                            deviation_quarter=(final_data$total_sqft-final_data$quarter_ave),
                             percentDeviation_k8=((final_data$total_sqft-final_data$k8_ave)/final_data$k8_ave),
-                            percentDeviation_quarter=((final_data$total_sqft-final_data$quarter_ave)/final_data$quarter_ave),
                             price=final_data$Price, total_sqft=final_data$total_sqft,year_built=final_data$YEAR_BUILT.y,
                             water_shed = final_data$WSHD_DIST, year = final_data$Year, month=final_data$Month,
                             stories = final_data$STORIES, roof = final_data$ROOF_TYPE, acres = final_data$ACRES_POLY,
@@ -29,8 +28,9 @@ relevant_data <- data.frame(PID = final_data$PID,k8_ave = final_data$k8_ave, qua
                                                                                  as.numeric(final_data$BATH_HALF)),
                             fullbaths = final_data$BATH_FULL, halfbaths = final_data$BATH_HALF, homestead = final_data$HOMESTEAD,
                             elemSchool = final_data$elemSchool, midSchool=final_data$midSchool, highSchool =final_data$highSchool,
-                            highSchoolRank = final_data$highSchool_ranking)
+                            highSchoolRank = final_data$highSchool_ranking, lat = final_data$lat, long=final_data$long)
 
+write.csv(relevant_data, "k8_relevant_data.csv")
 relevant_data <- relevant_data[(complete.cases(relevant_data)),]
 relevant_data$neighborhood <- as.factor(relevant_data$neighborhood)
 relevant_data$condition <- as.numeric(relevant_data$condition)
@@ -98,7 +98,6 @@ anova(test1, test2)
 AIC(test2, test3)
 plot(test)
 leverage_problems <- data.frame(PID=relevant_data[((hatvalues(test)/mean(hatvalues(test)))>3),1])
-
 resid_problems <- data.frame(PID =relevant_data[(abs(test$residuals)>2),1])
 cooks_problems <- data.frame(PID=relevant_data[((cooks.distance(test)/mean(cooks.distance(test),na.rm=T))>10),1])
 outliers <- full_join(leverage_problems,resid_problems)
