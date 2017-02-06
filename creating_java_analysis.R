@@ -45,8 +45,8 @@ homes_with_sales_all <-inner_join(homes_updatedXY, sales_cleaned)
 parcels <- read.dbf("parcels_henn.dbf")
 
 parcels$PID <- as.factor(as.numeric(as.character(parcels$PIN2)))
-sold_homes <- data.frame(PID=unique(inner_join(homes_with_sales,parcels)$PID))
-sold_homes$soldHalfMileBuffer <- TRUE
+sold_homes_half <- data.frame(PID=unique(inner_join(homes_with_sales,parcels)$PID))
+sold_homes_half$soldHalfMileBuffer <- TRUE
 
 sold_homes_quarter <- data.frame(PID=unique(inner_join(homes_with_sales_quarter,parcels)$PID))
 sold_homes_quarter$soldQuarterMileBuffer <- TRUE
@@ -57,15 +57,28 @@ sold_homes_all$sold <- TRUE
 homes_final_all<- left_join(homes_updatedXY,sold_homes_all)
 homes_final_all$sold[is.na(homes_final_all$sold)]<-FALSE
 
-homes_final<- left_join(homes_updatedXY,sold_homes)
+
+homes_final_half<- left_join(homes_updatedXY,sold_homes_half)
 homes_final_quarter <- left_join(homes_updatedXY,sold_homes_quarter)
-homes_final$soldHalfMileBuffer[is.na(homes_final$soldHalfMileBuffer)]<-FALSE
+homes_final_half$soldHalfMileBuffer[is.na(homes_final_half$soldHalfMileBuffer)]<-FALSE
 homes_final_quarter$soldQuarterMileBuffer[is.na(homes_final_quarter$soldQuarterMileBuffer)]<-FALSE
 
+homes_final_half$inHalfBuffer <- 1
+homes_final_quarter$inQuarterBuffer <- 1
+
+
 write.csv(homes_final_all[,-c(2)],"javahomes.csv",row.names=F)
-write.csv(homes_final[,-c(2)],"half_mile_buffer_javahomes.csv",row.names=F)
+write.csv(homes_final_half[,-c(2)],"half_mile_buffer_javahomes.csv",row.names=F)
 write.csv(homes_final_quarter[,-c(2)],"quarter_mile_buffer_javahomes.csv",row.names=F)
 write.csv(homes_final_quarter[,1:2],"homes_OBJID_PID.csv",row.names=F)
+write.csv(homes_final_all[,1:2],"homes_OBJID_PID.csv",row.names=F)
+
+
+sold_homes_all <- left_join(sold_homes_all,sold_homes_quarter)
+sold_homes_all$soldQuarterMileBuffer[is.na(sold_homes_all$soldQuarterMileBuffer)]<-FALSE
+
+sold_homes_all <- left_join(sold_homes_all, sold_homes_half)
+sold_homes_all$soldHalfMileBuffer[is.na(sold_homes_all$soldHalfMileBuffer)]<- FALSE
 
 #reduce charecteristics needed
 final_data <- inner_join(sold_homes_all,homes)
