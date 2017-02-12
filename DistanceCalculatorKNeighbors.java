@@ -18,7 +18,8 @@ class DistanceCalculatorKNeighbors{
 		Home houseData;
 		Home neighborData;
 		LinkedListKNeigh kInfo;
-		int k = 1;
+		int k = 16;
+		int innerK=8;
 		Double neighDistance;
 		KHomes curNeigh;
 		int validHomes = 0;
@@ -39,6 +40,7 @@ class DistanceCalculatorKNeighbors{
 			System.out.println("Something happened");
 		}
 		for(int curHouse=0;curHouse<Minneapolis.size();curHouse++){
+			System.out.println(curHouse);
 			houseData = Minneapolis.get(curHouse);
 			if(houseData.isValid()){
 				validHomes ++;
@@ -51,10 +53,10 @@ class DistanceCalculatorKNeighbors{
 					kInfo.add(curNeigh);	
 				}
 				totalMaxDistance += kInfo.getDist();
-				houseData.setNeighSize(kInfo.getAve());
+				houseData.setNeighSize(kInfo.getRingAve(innerK));
 			}
 		}
-		PrintWriter writer = new PrintWriter("deviations_k_1.csv", "UTF-8"); //file writer
+		PrintWriter writer = new PrintWriter("deviations_k_2.csv", "UTF-8"); //file writer
 		for(Home house: Minneapolis){
 			if(house.isValid()){
 				writer.println(house.getID() + "," + house.getNeighSize());

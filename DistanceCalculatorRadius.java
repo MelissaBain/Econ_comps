@@ -32,7 +32,8 @@ public class DistanceCalculatorRadius {
 		catch(FileNotFoundException e){
 			System.out.println("Something happened");
 		}
-		for(int curHouse=0;curHouse<Minneapolis.size();curHouse++){
+		int size = Minneapolis.size();
+		for(int curHouse=0;curHouse<size;curHouse++){
 			houseData = Minneapolis.get(curHouse);
 			if(houseData.isValid()){
 				int totalSize = 0;
@@ -40,19 +41,23 @@ public class DistanceCalculatorRadius {
 				for(int curNeighbor=0; curNeighbor<Minneapolis.size();curNeighbor++){
 					neighborData = Minneapolis.get(curNeighbor);
 					if(distance(houseData.getLat(),houseData.getLon(), neighborData.getLat(),
-						neighborData.getLon())<.5){
+						neighborData.getLon())<1.25){
 						totalSize += neighborData.getSqrFeet();
 						numNeighbors += 1;
 				  }
+	
 				}
 				aveNeigh=(totalSize-houseData.getSqrFeet())/numNeighbors;
 				houseData.setNeighSize(aveNeigh);
+				houseData.setNeighbors(numNeighbors);
 			}
 		}
-		PrintWriter writer = new PrintWriter("deviations_half_mile_all.csv", "UTF-8"); //file writer
+		
+		
+		PrintWriter writer = new PrintWriter("deviations_mileQuarter_mile_all.csv", "UTF-8"); //file writer
 		for(Home house: Minneapolis){
 			if(house.isValid()){
-				writer.println(house.getID() + "," + house.getNeighSize());
+				writer.println(house.getID() + "," + house.getNeighSize() + ","+house.getNeighbors());
 		    }
 		}
 		writer.close();

@@ -5,6 +5,7 @@ class Home{
 	private Double sqrFeet;
 	private Double neighSize = 0.0;
 	private boolean soldHalfMile;
+	private int neighbors;
 
 	Home(int ID, Double x, Double y, Double sqrFeet,boolean soldHalfMile){
 		this.ID = ID;
@@ -40,5 +41,13 @@ class Home{
 	
 	public int getID(){
 		return ID;
+	}
+	
+	public void setNeighbors(int neighbors){
+		this.neighbors = neighbors;
+	}
+	
+	public int getNeighbors(){
+		return neighbors;
 	}
 }
