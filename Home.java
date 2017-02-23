@@ -1,3 +1,7 @@
+/**
+*The home class stores information about each house in the dataset. 
+*/
+
 class Home{
 	private int ID;
 	private Double lat;

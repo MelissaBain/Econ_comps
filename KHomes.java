@@ -1,3 +1,8 @@
+/**
+*The KHomes class creates house "nodes" for the linked list. Each house knows the
+*next house  
+*/
+
 class KHomes implements Comparable<KHomes>{
 	private Double distance;
 	private Double sqrFeet;

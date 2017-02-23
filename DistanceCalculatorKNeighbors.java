@@ -1,3 +1,8 @@
+/**
+*The DistanceCalculatorKNeighbors class will return the average neighboring house size 
+*for a given number of neighbors (or ring  of neighbors if an inner and outer K are specified). 
+*/
+
 import java.util.*;
 import java.lang.*;
 import java.io.*;

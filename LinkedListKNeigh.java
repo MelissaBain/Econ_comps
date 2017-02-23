@@ -1,3 +1,8 @@
+/**
+*The LinkedListKNeigh class acts like a linked list but with certain capacities
+*specific to the task of sorting homes. 
+*/
+
 class LinkedListKNeigh{
 	int k;
 	KHomes header;

@@ -1,3 +1,8 @@
+/**
+*The DistanceCalculatorRadius class will return the average neighboring house size for 
+*a given radius or ring if an inner and outer distance are specified. 
+*/
+
 import java.util.*;
 import java.lang.*;
 import java.io.*;
@@ -41,7 +46,8 @@ public class DistanceCalculatorRadius {
 				for(int curNeighbor=0; curNeighbor<Minneapolis.size();curNeighbor++){
 					neighborData = Minneapolis.get(curNeighbor);
 					if(distance(houseData.getLat(),houseData.getLon(), neighborData.getLat(),
-						neighborData.getLon())<1.25){
+						neighborData.getLon())<1.1 && distance(houseData.getLat(),houseData.getLon(), neighborData.getLat(),
+						neighborData.getLon())>=1){
 						totalSize += neighborData.getSqrFeet();
 						numNeighbors += 1;
 				  }
@@ -54,7 +60,7 @@ public class DistanceCalculatorRadius {
 		}
 		
 		
-		PrintWriter writer = new PrintWriter("deviations_mileQuarter_mile_all.csv", "UTF-8"); //file writer
+		PrintWriter writer = new PrintWriter("deviations_fifthRing_all.csv", "UTF-8"); //file writer
 		for(Home house: Minneapolis){
 			if(house.isValid()){
 				writer.println(house.getID() + "," + house.getNeighSize() + ","+house.getNeighbors());
